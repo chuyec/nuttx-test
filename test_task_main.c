@@ -23,18 +23,56 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <fcntl.h>
+
+#include "stm32_denis.h"
+
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
+#define DENIS_DEVNAME    "/dev/denis0"
 
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
 
 /****************************************************************************
- * hello_main
+ * main
  ****************************************************************************/
 
 int main(int argc, FAR char *argv[])
 {
-  printf("Test task!\n");
+  int result;
+  int fd;
+
+  printf("Test Task started!\n");
+
+  result = board_denis_initialize(1);
+  if (result != 0)
+    {
+      printf("Failed to Denis initialization\n");
+      goto errout;
+    }
+
+  printf("Opening '%s' for write\n", DENIS_DEVNAME);
+
+  fd = open(DENIS_DEVNAME, O_RDWR);
+  if (fd < 0)
+    {
+      printf("Failed to open %s: %d\n", DENIS_DEVNAME, errno);
+      goto errout;
+    }
+
+  printf("Done!\n");
+
   return 0;
+
+  errout:
+
+  exit(EXIT_FAILURE);
 }

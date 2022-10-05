@@ -35,6 +35,9 @@ struct denis_config_s
      */
 
     int spi_devid;
-}
+};
+
+int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
+                    FAR struct denis_config_s *config);
 
 #endif /* __INCLUDE_NUTTX_SENSORS_LIS3DSH_H */

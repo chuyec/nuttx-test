@@ -22,9 +22,10 @@
 #include <nuttx/spi/spi.h>
 #include <arch/board/board.h>
 
-#include "stm32.h"
+// #include "stm32.h"
 
 #include "denis.h"
+#include "stm32_denis.h"
 
 /****************************************************************************
  * Pre-processor Definitions

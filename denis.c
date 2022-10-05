@@ -122,8 +122,9 @@ static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
 {
     FAR struct inode *inode = filep->f_inode;
     FAR struct denis_dev_s *priv = inode->i_private;
+    int ret;
 
-    sninfo("%s: %d bytes\n", __LINE__, buflen);
+    sninfo("%s: %d bytes\n", __func__, buflen);
 
     /* Acquire the semaphore before the data is copied */
 

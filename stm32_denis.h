@@ -46,7 +46,7 @@ extern "C"
  * Public Function Prototypes
  ****************************************************************************/
 
-int board_denis_initialize(int devno, int busno);
+int board_denis_initialize(int busno);
 
 #undef EXTERN
 #ifdef __cplusplus

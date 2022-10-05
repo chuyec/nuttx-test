@@ -30,5 +30,7 @@ MODULE    = $(CONFIG_EXAMPLES_TEST_TASK)
 # Test Task Example
 
 MAINSRC = test_task_main.c
+CSRCS += stm32_denis.c
+CSRCS += denis.c
 
 include $(APPDIR)/Application.mk
