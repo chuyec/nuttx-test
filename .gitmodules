@@ -1,0 +1,3 @@
+[submodule "libs/nml"]
+	path = libs/nml
+	url = ../../nomemory/neat-matrix-library.git
