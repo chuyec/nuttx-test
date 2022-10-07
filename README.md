@@ -57,6 +57,7 @@ make menuconfig
 1. _`Application Configuration ---> Examples ---> `_ Select _`[*] Test Task`_
 2. _`RTOS Features ---> Tasks and Scheduling ---> Application entry point ---> `_ Type _`'test_task_main'`_
 3. _`System Type ---> STM32 Peripheral Support ---> `_ Select _`SPI1`_
+4. _`Library Routines ---> Standard C I/O ---> `_ Select _`Enable floating point in printf`_
 
 ### 4. Собрать:
 

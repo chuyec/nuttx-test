@@ -30,11 +30,17 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include "libs/nml/nml.h"
+
 #include "stm32_denis.h"
 
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
+
+#ifndef CONFIG_LIBC_FLOATINGPOINT
+#  error CONFIG_LIBC_FLOATINGPOINT must be enabled
+#endif
 
 #define TASK_1_STACKSIZE 2048
 #define TASK_1_PRIORITY 100
@@ -64,7 +70,7 @@ static int task_1(int argc, char *argv[])
       goto exit_without_close;
     }
 
-  for (int q = 0; q < 30; q++)
+  for (int q = 0; q < 2; q++)
   {
     int nbytes = write(fd, msg, msg_len);
     if (nbytes != msg_len)
@@ -75,7 +81,7 @@ static int task_1(int argc, char *argv[])
       goto exit_with_close;
     }
     
-    usleep(501);
+    sleep(1);
   }
 
   exit_with_close:
@@ -94,8 +100,8 @@ static int task_1(int argc, char *argv[])
 static int task_2(int argc, char *argv[])
 {
   int ret = OK;
-  const char * msg = "task 2 message";
-  const size_t msg_len = strlen(msg);
+  // const char * msg = "task 2 message";
+  // const size_t msg_len = strlen(msg);
 
   printf("%s: Running\n", __func__);
   printf("%s: Opening '%s' for write\n", __func__, DENIS_DEVNAME);
@@ -108,18 +114,40 @@ static int task_2(int argc, char *argv[])
       goto exit_without_close;
     }
 
-  for (int q = 0; q < 30; q++)
+  while (1)
   {
-    int nbytes = write(fd, msg, msg_len);
-    if (nbytes != msg_len)
+    nml_mat* m;
+
+    unsigned int nrows = nml_rand_interval(1, 4);
+    unsigned int ncols = nml_rand_interval(1, 4);
+
+    printf("%s: Creating a random %dx%d matrix\n", __func__, nrows, ncols);
+
+    m = nml_mat_rnd(nrows, ncols, -10.0, 10.0);
+
+    nml_mat_printf(m, "%.2lf\t\t");
+
+    for (int i = 0; i < m->num_rows; i++)
     {
-      printf("%s: ERROR: write(%ld) returned %ld\n",
-              __func__, (long)msg_len, (long)nbytes);
-      ret = EXIT_FAILURE;
-      goto exit_with_close;
+      void *pdata = m->data[i];
+      size_t data_len = m->num_cols * sizeof(**m->data);
+
+      int nbytes = write(fd, pdata, data_len);
+      if (nbytes != data_len)
+      {
+        nml_mat_free(m);
+
+        printf("%s: ERROR: write(%ld) returned %ld\n",
+                __func__, (long)data_len, (long)nbytes);
+
+        ret = EXIT_FAILURE;
+        goto exit_with_close;
+      }
     }
+
+    nml_mat_free(m);
     
-    usleep(500);
+    sleep(1);
   }
 
   exit_with_close:
@@ -156,6 +184,8 @@ int main(int argc, FAR char *argv[])
       printf("Failed to Denis initialization\n");
       goto errout;
     }
+
+  srand(time(NULL)); // Should be called once per program
   
   result = task_create("task_1", TASK_1_PRIORITY,
                     TASK_1_STACKSIZE, task_1, NULL);

@@ -32,5 +32,7 @@ MODULE    = $(CONFIG_EXAMPLES_TEST_TASK)
 MAINSRC = test_task_main.c
 CSRCS += stm32_denis.c
 CSRCS += denis.c
+CSRCS += libs/nml/nml.c
+CSRCS += libs/nml/nml_util.c
 
 include $(APPDIR)/Application.mk
