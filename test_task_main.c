@@ -100,8 +100,6 @@ static int task_1(int argc, char *argv[])
 static int task_2(int argc, char *argv[])
 {
   int ret = OK;
-  // const char * msg = "task 2 message";
-  // const size_t msg_len = strlen(msg);
 
   printf("%s: Running\n", __func__);
   printf("%s: Opening '%s' for write\n", __func__, DENIS_DEVNAME);
@@ -116,26 +114,45 @@ static int task_2(int argc, char *argv[])
 
   while (1)
   {
-    nml_mat* m;
+    nml_mat *m1, *m2, *m3;
 
-    unsigned int nrows = nml_rand_interval(1, 4);
-    unsigned int ncols = nml_rand_interval(1, 4);
+    unsigned int nrows_m1 = nml_rand_interval(1, 5);
+    unsigned int ncols_m1 = nml_rand_interval(1, 5);
+    unsigned int nrows_m2 = ncols_m1;
+    unsigned int ncols_m2 = nml_rand_interval(1, 5);
 
-    printf("%s: Creating a random %dx%d matrix\n", __func__, nrows, ncols);
+    printf("\n\n");
+    printf("%s: Creating a random m1 matrix %dx%d:\n", __func__, nrows_m1, ncols_m1);
 
-    m = nml_mat_rnd(nrows, ncols, -10.0, 10.0);
+    m1 = nml_mat_rnd(nrows_m1, ncols_m1, -100.0, 100.0);
+    nml_mat_printf(m1, "%.2lf\t\t");
 
-    nml_mat_printf(m, "%.2lf\t\t");
+    printf("%s: Creating a random m2 matrix %dx%d:\n", __func__, nrows_m2, ncols_m2);
 
-    for (int i = 0; i < m->num_rows; i++)
+    m2 = nml_mat_rnd(nrows_m2, ncols_m2, -100.0, 100.0);
+    nml_mat_printf(m2, "%.2lf\t\t");
+
+    printf("%s: m1 and m2 matrix multiplication:\n", __func__);
+
+    m3 = nml_mat_dot(m1, m2);
+    nml_mat_printf(m3, "%.2lf\t\t");
+
+    nml_mat_free(m1);
+    nml_mat_free(m2);
+
+    for (int i = 0; i < m3->num_rows; i++)
     {
-      void *pdata = m->data[i];
-      size_t data_len = m->num_cols * sizeof(**m->data);
+      /** There is no requirement to send the entire matrix.
+       * We send it row by row. Because the matrix is not located in one continuous memory area
+       */
+      
+      void *pdata = m3->data[i];
+      size_t data_len = m3->num_cols * sizeof(**m3->data);
 
       int nbytes = write(fd, pdata, data_len);
       if (nbytes != data_len)
       {
-        nml_mat_free(m);
+        nml_mat_free(m3);
 
         printf("%s: ERROR: write(%ld) returned %ld\n",
                 __func__, (long)data_len, (long)nbytes);
@@ -145,7 +162,7 @@ static int task_2(int argc, char *argv[])
       }
     }
 
-    nml_mat_free(m);
+    nml_mat_free(m3);
     
     sleep(1);
   }
@@ -187,16 +204,14 @@ int main(int argc, FAR char *argv[])
 
   srand(time(NULL)); // Should be called once per program
   
-  result = task_create("task_1", TASK_1_PRIORITY,
-                    TASK_1_STACKSIZE, task_1, NULL);
+  result = task_create("task_1", TASK_1_PRIORITY, TASK_1_STACKSIZE, task_1, NULL);
   if (result < 0)
     {
       printf("Failed to start task_1: %d\n", errno);
       goto errout;
     }
 
-  result = task_create("task_2", TASK_2_PRIORITY,
-                    TASK_2_STACKSIZE, task_2, NULL);
+  result = task_create("task_2", TASK_2_PRIORITY, TASK_2_STACKSIZE, task_2, NULL);
   if (result < 0)
     {
       printf("Failed to start task_2: %d\n", errno);
