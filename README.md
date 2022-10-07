@@ -32,18 +32,21 @@ git clone https://github.com/apache/incubator-nuttx-apps apps
 
 Более подробно можно посмотреть [тут](https://nuttx.apache.org/docs/latest/quickstart/install.html)
 
-### 2. Склонировать текущий репозиторий в папку apps/examples/test-task:
+### 2. Клонировать текущий репозиторий в папку _apps/examples/test_task_ и обновить сабмодули:
 
 ```sh
 cd apps/examples
-git clone git@github.com:chuyec/nuttx-test-task.git test-task
+git clone git@github.com:chuyec/nuttx-test-task.git test_task
+cd test_task
+git submodule update --recursive
 ```
 
 ### 3. Выбрать стандартную плату и конфигурацию:
 
 ```sh
 cd nuttx
-tools/configure.sh -l nucleo-f4x1re:f401-nsh
+make distclean
+tools/configure.sh -l stm32f4discovery:nsh
 ```
 
 ### 4. Сконфигурировать Kconfig:
