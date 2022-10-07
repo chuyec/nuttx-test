@@ -122,13 +122,19 @@ static void denis_write_dev(FAR struct denis_dev_s *dev, const void * data, size
 
   /* Set CS to low which selects the DENIS */
 
+#warning CS pin functionality is not implemented for SPI
+
+  /// @warning CS pin functionality is not implemented
   SPI_SELECT(dev->spi, dev->config->spi_devid, true);
+//   stm32_gpiowrite(GPIO_SPI1_NSS, false);
 
   SPI_SNDBLOCK(dev->spi, data, data_len);
 
   /* Set CS to high which deselects the DENIS */
 
+  /// @warning CS pin functionality is not implemented
   SPI_SELECT(dev->spi, dev->config->spi_devid, false);
+//   stm32_gpiowrite(GPIO_SPI1_NSS, true);
 
   /* Unlock the SPI bus */
 
