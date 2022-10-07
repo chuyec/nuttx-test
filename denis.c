@@ -40,13 +40,6 @@ struct denis_dev_s
   FAR struct spi_dev_s *spi;           /* Pointer to the SPI instance */
   FAR struct denis_config_s *config;   /* Pointer to the configuration
                                         * of the LIS3DSH sensor */
-  sem_t datasem;                       /* Manages exclusive access to this
-                                        * structure */
-//   struct lis3dsh_sensor_data_s data;   /* The data as measured by the sensor */
-//   struct work_s work;                  /* The work queue is responsible for
-//                                         * retrieving the data from the
-//                                         * sensor after the arrival of new
-//                                         * data was signalled in an interrupt */
 };
 
 /****************************************************************************
@@ -179,24 +172,10 @@ static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
 {
     FAR struct inode *inode = filep->f_inode;
     FAR struct denis_dev_s *priv = inode->i_private;
-    int ret;
 
     printf("%s: %d bytes\n", __func__, buflen);
 
-    /* Acquire the semaphore before the data is copied */
-
-    ret = nxsem_wait(&priv->datasem);
-    if (ret < 0)
-    {
-        printf("ERROR: Could not acquire priv->datasem: %d\n", ret);
-        return ret;
-    }
-
     denis_write_dev(priv, buffer, buflen);
-
-    /* Give back the semaphore */
-
-    nxsem_post(&priv->datasem);
 
     printf("%s:\n", __func__);
     dump_hex(buffer, buflen);
@@ -232,9 +211,6 @@ int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
   priv->spi         = spi;
   priv->config      = config;
 
-  nxsem_init(&priv->datasem, 0, 1);     /* Initialize sensor data access
-                                         * semaphore */
-
   /* Setup SPI frequency and mode */
 
   SPI_SETFREQUENCY(spi, DENIS_SPI_FREQUENCY);
@@ -247,7 +223,6 @@ int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
     {
       snerr("ERROR: Failed to register driver: %d\n", ret);
       kmm_free(priv);
-      nxsem_destroy(&priv->datasem);
       return ret;
     }
 
