@@ -23,7 +23,7 @@ config EXAMPLES_TEST_TASK_PRIORITY
 	default 100
 
 config EXAMPLES_TEST_TASK_STACKSIZE
-	int "Hello stack size"
+	int "Test Task stack size"
 	default DEFAULT_TASK_STACKSIZE
 
 endif

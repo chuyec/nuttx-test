@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <debug.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <nuttx/kmalloc.h>
 #include <nuttx/wqueue.h>
@@ -86,6 +87,33 @@ static struct denis_dev_s *g_denis_list = NULL;
  ****************************************************************************/
 
 /****************************************************************************
+ * Name: denis_write_dev
+ ****************************************************************************/
+
+static void denis_write_dev(FAR struct denis_dev_s *dev, const void * data, size_t data_len)
+{
+  /* Lock the SPI bus so that only one device can access it at the same
+   * time
+   */
+
+  SPI_LOCK(dev->spi, true);
+
+  /* Set CS to low which selects the DENIS */
+
+  SPI_SELECT(dev->spi, dev->config->spi_devid, true);
+
+  SPI_SNDBLOCK(dev->spi, data, data_len);
+
+  /* Set CS to high which deselects the DENIS */
+
+  SPI_SELECT(dev->spi, dev->config->spi_devid, false);
+
+  /* Unlock the SPI bus */
+
+  SPI_LOCK(dev->spi, false);
+}
+
+/****************************************************************************
  * Name: denis_open
  ****************************************************************************/
 
@@ -124,22 +152,26 @@ static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
     FAR struct denis_dev_s *priv = inode->i_private;
     int ret;
 
-    sninfo("%s: %d bytes\n", __func__, buflen);
+    printf("%s: %d bytes\n", __func__, buflen);
 
     /* Acquire the semaphore before the data is copied */
 
     ret = nxsem_wait(&priv->datasem);
     if (ret < 0)
     {
-        snerr("ERROR: Could not acquire priv->datasem: %d\n", ret);
+        printf("ERROR: Could not acquire priv->datasem: %d\n", ret);
         return ret;
     }
+
+    denis_write_dev(priv, buffer, buflen);
 
     /* Give back the semaphore */
 
     nxsem_post(&priv->datasem);
 
-    return 0;
+    printf("%s: '%s'\n", __func__, buffer);
+
+    return buflen;
 }
 
 /****************************************************************************
