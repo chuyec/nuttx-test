@@ -42,10 +42,10 @@
 #  error CONFIG_LIBC_FLOATINGPOINT must be enabled
 #endif
 
-#define TASK_1_STACKSIZE 2048
-#define TASK_1_PRIORITY 100
-#define TASK_2_STACKSIZE 2048
-#define TASK_2_PRIORITY 100
+#define TASK_1_STACKSIZE  2048
+#define TASK_1_PRIORITY   100
+#define TASK_2_STACKSIZE  2048
+#define TASK_2_PRIORITY   100
 
 #define DENIS_DEVNAME    "/dev/denis0"
 
@@ -53,11 +53,14 @@
  * Private Functions
  ****************************************************************************/
 
+/****************************************************************************
+ * task_1
+ * Task to generate a counter
+ ****************************************************************************/
+
 static int task_1(int argc, char *argv[])
 {
   int ret = OK;
-  const char * msg = "task 1 message";
-  const size_t msg_len = strlen(msg);
 
   printf("%s: Running\n", __func__);
   printf("%s: Opening '%s' for write\n", __func__, DENIS_DEVNAME);
@@ -70,13 +73,18 @@ static int task_1(int argc, char *argv[])
       goto exit_without_close;
     }
 
-  for (int q = 0; q < 2; q++)
+  while(1)
   {
-    int nbytes = write(fd, msg, msg_len);
-    if (nbytes != msg_len)
+    /* Timestamp as a counter */
+
+    time_t timestamp = time(NULL);
+    size_t timestamp_len = sizeof(timestamp);
+
+    int nbytes = write(fd, &timestamp, timestamp_len);
+    if (nbytes != timestamp_len)
     {
-      printf("%s: ERROR: write(%ld) returned %ld\n",
-              __func__, (long)msg_len, (long)nbytes);
+      printf("%s: ERROR: write(%zd) returned %d\n", __func__, timestamp_len, nbytes);
+
       ret = EXIT_FAILURE;
       goto exit_with_close;
     }
@@ -97,6 +105,11 @@ static int task_1(int argc, char *argv[])
   exit(ret);
 }
 
+/****************************************************************************
+ * task_1
+ * Task to generate a matrix multiplication
+ ****************************************************************************/
+
 static int task_2(int argc, char *argv[])
 {
   int ret = OK;
@@ -116,10 +129,12 @@ static int task_2(int argc, char *argv[])
   {
     nml_mat *m1, *m2, *m3;
 
-    unsigned int nrows_m1 = nml_rand_interval(1, 5);
-    unsigned int ncols_m1 = nml_rand_interval(1, 5);
+    /* Generate random rows and colomns number */
+
+    unsigned int nrows_m1 = nml_rand_interval(1, 6);
+    unsigned int ncols_m1 = nml_rand_interval(1, 6);
     unsigned int nrows_m2 = ncols_m1;
-    unsigned int ncols_m2 = nml_rand_interval(1, 5);
+    unsigned int ncols_m2 = nml_rand_interval(1, 6);
 
     printf("\n\n");
     printf("%s: Creating a random m1 matrix %dx%d:\n", __func__, nrows_m1, ncols_m1);
@@ -154,8 +169,7 @@ static int task_2(int argc, char *argv[])
       {
         nml_mat_free(m3);
 
-        printf("%s: ERROR: write(%ld) returned %ld\n",
-                __func__, (long)data_len, (long)nbytes);
+        printf("%s: ERROR: write(%zd) returned %d\n", __func__, data_len, nbytes);
 
         ret = EXIT_FAILURE;
         goto exit_with_close;
@@ -164,7 +178,7 @@ static int task_2(int argc, char *argv[])
 
     nml_mat_free(m3);
     
-    sleep(1);
+    sleep(3);
   }
 
   exit_with_close:
@@ -194,6 +208,8 @@ int main(int argc, FAR char *argv[])
 
   printf("\n");
   printf("Test Task started!\n");
+
+  /* Normally board_denis_initialize() must be called before the main */
 
   result = board_denis_initialize(1);
   if (result != 0)
