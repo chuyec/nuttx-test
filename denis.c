@@ -1,7 +1,10 @@
 /**
  * @file denis.c
- * @author your name (you@domain.com)
- * @brief 
+ * @author Denis Shreiber (chuyecd@gmail.com)
+ * 
+ * @brief Драйвер для работы с устройством "denis"
+ *        Реализован на основе драйвера lis3dsh
+ * 
  * @version 0.1
  * @date 2022-10-05
  * 
@@ -15,17 +18,11 @@
 
 #include <nuttx/config.h>
 
-#include <assert.h>
-#include <errno.h>
 #include <debug.h>
-#include <string.h>
 #include <stdio.h>
 
 #include <nuttx/kmalloc.h>
-#include <nuttx/wqueue.h>
-#include <nuttx/random.h>
 #include <nuttx/fs/fs.h>
-#include <nuttx/semaphore.h>
 
 #include "denis.h"
 
@@ -39,7 +36,7 @@ struct denis_dev_s
                                         * drivers */
   FAR struct spi_dev_s *spi;           /* Pointer to the SPI instance */
   FAR struct denis_config_s *config;   /* Pointer to the configuration
-                                        * of the LIS3DSH sensor */
+                                        * of the DENIS device */
 };
 
 /****************************************************************************
@@ -57,6 +54,11 @@ static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
  * Private Data
  ****************************************************************************/
 
+/**
+ * @brief Набор хэндлеров операций с файлами
+ * для низкоуровневой реализации драйвера и взаимодействия с SPI устройством
+ * 
+ */
 static const struct file_operations g_denis_fops =
 {
   denis_open,      /* open */
@@ -79,6 +81,12 @@ static struct denis_dev_s *g_denis_list = NULL;
  * Private Functions
  ****************************************************************************/
 
+/**
+ * @brief Вывести в serial port бинарные данные в hex формате
+ * 
+ * @param data Указатель на данные
+ * @param size Размер данных
+ */
 void dump_hex(const void* data, size_t size) {
 	char ascii[17];
 	size_t i, j;
@@ -112,6 +120,13 @@ void dump_hex(const void* data, size_t size) {
  * Name: denis_write_dev
  ****************************************************************************/
 
+/**
+ * @brief Прямая запись данных в устройство Denis
+ * 
+ * @param dev Указатель на структуру объекта драйвера
+ * @param data Указатель на данные для записи
+ * @param data_len Длинна данных
+ */
 static void denis_write_dev(FAR struct denis_dev_s *dev, const void * data, size_t data_len)
 {
   /* Lock the SPI bus so that only one device can access it at the same
@@ -145,6 +160,16 @@ static void denis_write_dev(FAR struct denis_dev_s *dev, const void * data, size
  * Name: denis_open
  ****************************************************************************/
 
+/**
+ * @brief Открыть устройство Denis
+ * 
+ * Здесь при необходимости осуществляется первичная настройка устройства
+ * и инициализация приватных параметров драйвера.
+ * Не требуется реализация в текущем случае
+ * 
+ * @param filep Указатель на дескриптор файла
+ * @return 0 - в случае успеха, отрицательное значение в ином случае
+ */
 static int denis_open(FAR struct file *filep)
 {
     return OK;
@@ -154,6 +179,16 @@ static int denis_open(FAR struct file *filep)
  * Name: denis_close
  ****************************************************************************/
 
+/**
+ * @brief Закрыть устройство Denis
+ * 
+ * Здесь при необходимости осуществляются действия с устройством
+ * по окончании работы с ним.
+ * Не требуется реализация в текущем случае
+ * 
+ * @param filep Указатель на дескриптор файла
+ * @return 0 - в случае успеха, отрицательное значение в ином случае
+ */
 static int denis_close(FAR struct file *filep)
 {
     return OK;
@@ -163,6 +198,17 @@ static int denis_close(FAR struct file *filep)
  * Name: denis_read
  ****************************************************************************/
 
+/**
+ * @brief Прочитать данные из устройства Denis
+ * 
+ * Здесь реализуется POSIX интерфейс доступа к устройству для чтения
+ * Не требуется реализация в текущем случае. Чтение запрещено
+ * 
+ * @param filep Указатель на дескриптор файла
+ * @param buffer Указатель на данные
+ * @param buflen Длина данных
+ * @return -ENOSYS (Invalid system call number)
+ */
 static ssize_t denis_read(FAR struct file *filep, FAR char *buffer,
                             size_t buflen)
 {
@@ -173,6 +219,16 @@ static ssize_t denis_read(FAR struct file *filep, FAR char *buffer,
  * Name: denis_write
  ****************************************************************************/
 
+/**
+ * @brief Записать данные в устройство Denis
+ * 
+ * Здесь реализуется POSIX интерфейс доступа к устройству для записи
+ * 
+ * @param filep Указатель на дескриптор файла
+ * @param buffer Указатель на данные
+ * @param buflen Длина данных
+ * @return Количество записанных данных
+ */
 static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
                              size_t buflen)
 {
@@ -181,6 +237,7 @@ static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
 
     printf("%s: %d bytes\n", __func__, buflen);
 
+    // Прямая запись в устройство через конкретный интерфейс
     denis_write_dev(priv, buffer, buflen);
 
     printf("%s:\n", __func__);
@@ -193,6 +250,14 @@ static ssize_t denis_write(FAR struct file *filep, FAR const char *buffer,
  * Public Functions
  ****************************************************************************/
 
+/**
+ * @brief Зарегистрировать устройство Denis в системе
+ * 
+ * @param devpath Путь монтирования устройства
+ * @param spi Дескриптор SPI
+ * @param config Пользовательский конфиг, специфичный для устройства
+ * @return 0 - в случае успеха, отрицательное значение в ином случае
+ */
 int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
                     FAR struct denis_config_s *config)
 {
@@ -224,6 +289,7 @@ int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
 
   /* Register the character driver */
 
+  // Делаем связку между путем монтирования и файловыми операциями устройства
   ret = register_driver(devpath, &g_denis_fops, 0666, priv);
   if (ret < 0)
     {
@@ -232,7 +298,7 @@ int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
       return ret;
     }
 
-  /* Since we support multiple LIS3DSH devices, we will need to add this new
+  /* Since we support multiple devices, we will need to add this new
    * instance to a list of device instances so that it can be found by the
    * interrupt handler based on the received IRQ number.
    */

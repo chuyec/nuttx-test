@@ -1,7 +1,9 @@
 /**
  * @file stm32_denis.c
  * @author Denis Shreiber (chuyecd@gmail.com)
- * @brief 
+ * 
+ * @brief Реализует связку драйвера с конретным чипсетом
+ * 
  * @version 0.1
  * @date 2022-10-05
  * 
@@ -39,6 +41,12 @@
  * Public Functions
  ****************************************************************************/
 
+/**
+ * @brief Инициализируем интерфейс доступа к драйверу и регистрируем его
+ * 
+ * @param busno Номер шины, куда подключено устройство
+ * @return 0 - в случае успеха, отрицательное значение в ином случае
+ */
 int board_denis_initialize(int busno)
 {
     static struct denis_config_s denis0_config;
@@ -46,6 +54,8 @@ int board_denis_initialize(int busno)
     int ret;
 
     sninfo("Initializing Denis\n");
+
+    // Инициализируем SPIn, где n (busno) - номер SPI на контроллере
 
     spi = stm32_spibus_initialize(busno);
     if (!spi)
@@ -55,6 +65,7 @@ int board_denis_initialize(int busno)
     }
     else
     {
+        // Регистрируем устройство в системе по пути "dev/denis0"
         FAR const char *devpath = "/dev/denis0";
         ret = denis_register(devpath, spi, &denis0_config);
     }

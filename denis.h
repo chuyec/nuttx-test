@@ -1,6 +1,6 @@
 /**
  * @file denis.h
- * @author your name (you@domain.com)
+ * @author Denis Shreiber (chuyecd@gmail.com)
  * @brief 
  * @version 0.1
  * @date 2022-10-05
@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef __INCLUDE_DENIS_H
-#define __INCLUDE_DENIS_H
+#ifndef __DENIS_H
+#define __DENIS_H
 
 /****************************************************************************
  * Included Files
@@ -31,7 +31,7 @@ struct denis_config_s
 {
     /* Since multiple sensors can be connected to the same SPI bus we need
      * to use multiple spi device ids which are employed by NuttX to select/
-     * deselect the desired LIS3DSH chip via their chip select inputs.
+     * deselect the desired Denis chip via their chip select inputs.
      */
 
     int spi_devid;
@@ -40,4 +40,4 @@ struct denis_config_s
 int denis_register(FAR const char *devpath, FAR struct spi_dev_s *spi,
                     FAR struct denis_config_s *config);
 
-#endif /* __INCLUDE_NUTTX_SENSORS_LIS3DSH_H */
+#endif /* __DENIS_H */
